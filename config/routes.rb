@@ -1,11 +1,43 @@
 Rails.application.routes.draw do
-  devise_for :users
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  # API routes
+  namespace :api do
+    # Devise routes for user authentication
+    devise_for :users, controllers: {
+      sessions: 'api/users/sessions',
+      registrations: 'api/users/registrations'
+    }
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+    # User profile
+    get 'profile', to: 'users#show'
+    patch 'profile', to: 'users#update'
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+    # Products and categories
+    resources :categories, only: [:index, :show]
+    resources :products, only: [:index, :show] do
+      resources :reviews, only: [:index, :create]
+    end
+
+    # Cart
+    resource :cart, only: [:show, :update] do
+      post 'add_item', on: :member
+      delete 'remove_item', on: :member
+    end
+
+    # Orders
+    resources :orders, only: [:index, :show, :create] do
+      resources :payments, only: [:create]
+    end
+
+    # Shipping addresses
+    resources :shipping_addresses, only: [:index, :create, :update, :destroy]
+
+    # Wishlist
+    resource :wishlist, only: [:show] do
+      post 'add_item', on: :member
+      delete 'remove_item', on: :member
+    end
+
+    # Search
+    get 'search', to: 'search#index'
+  end
 end
